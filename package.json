@@ -1,0 +1,33 @@
+{
+  "name": "mongo-nested-sets",
+  "version": "0.0.1",
+  "description": "Mongo tested sets realisation",
+  "repository": "AncientSouls/MongoNestedSets",
+  "license": "MIT",
+  "scripts": {
+    "tsc": "rm -rf ./lib ./tests && ./node_modules/typescript/bin/tsc",
+    "test": "MONGO_URL=\"mongodb+srv://npm-tests:0123456789asdf@cluster0-rmet3.mongodb.net/test?retryWrites=true&w=majority\" ./node_modules/mocha/bin/mocha ./tests/index.js --require source-map-support/register",
+    "retest": "npm run tsc && npm run test",
+    "tslint": "./node_modules/tslint/bin/tslint -c tslint.json './src/**/*.ts'"
+  },
+  "dependencies": {
+    "lodash": "^4.17.10",
+    "simpl-schema": "^1.5.5",
+    "mongodb": "^3.2.6",
+    "chai": "^4.1.2"
+  },
+  "devDependencies": {
+    "@types/mocha": "^5.2.0",
+    "@types/node": "^10.0.2",
+    "async": "^2.6.0",
+    "chai": "^4.1.2",
+    "mocha": "^5.1.1",
+    "source-map-support": "^0.5.5",
+    "ts-node": "^6.0.2",
+    "tslint": "^5.9.1",
+    "tslint-config-airbnb": "^5.8.0",
+    "tslint-eslint-rules": "^5.1.0",
+    "typescript": "^2.8.3",
+    "mongodb": "^3.2.5"
+  }
+}
