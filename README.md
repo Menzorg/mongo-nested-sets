@@ -42,7 +42,7 @@ import { NestedSets } from 'mongo-nested-sets';
 
 const ns = new NestedSets();
 ns.init({
-    collection: Meteor["yourCollection"],
+    collection: Meteor["yourCollection"].rawCollection();,
     field: "yourField",
     client: Meteor["yourCollection"]._driver.mongo.client,
 });
