@@ -33,20 +33,24 @@ const assertP = (ns, tree, docId, toParent = true) => __awaiter(this, void 0, vo
     const chsByParentId = yield Nodes.find({
         [`${ns.field}.parentId`]: docId,
     }).toArray();
-    const chsByCoords = yield Nodes.find({
+    let $or = docPs.map(({ tree, space, left, right, depth }) => ({
+        tree,
+        space,
+        left: { $gt: left },
+        right: { $lt: right },
+        depth: depth + 1,
+    }));
+    let findObj = {
         [ns.field]: {
             $elemMatch: {
                 tree,
-                $or: docPs.map(({ tree, space, left, right, depth }) => ({
-                    tree,
-                    space,
-                    left: { $gt: left },
-                    right: { $lt: right },
-                    depth: depth + 1,
-                })),
             },
         },
-    }).toArray();
+    };
+    if (!$or.length)
+        $or = [{ _id: undefined }];
+    findObj[ns.field].$elemMatch["$or"] = $or;
+    const chsByCoords = yield Nodes.find(findObj).toArray();
     chai_1.assert.deepEqual(toIds(chsByParentId), toIds(chsByCoords));
     for (let dp = 0; dp < docPs.length; dp++) {
         const docP = docPs[dp];
@@ -75,6 +79,8 @@ const assertP = (ns, tree, docId, toParent = true) => __awaiter(this, void 0, vo
 describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
     before((done) => {
         mongodb_1.MongoClient.connect(process.env.MONGO_URL, { useNewUrlParser: true }, function (err, client) {
+            if (err)
+                console.log(err);
             mongo = client;
             db = client.db('npm-tests');
             Nodes = db.collection('Nodes');
@@ -90,6 +96,9 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
     beforeEach(() => __awaiter(this, void 0, void 0, function* () {
         yield Nodes.deleteMany({});
     }));
+    after(() => {
+        mongo.close();
+    });
     const ns = new index_1.NestedSets();
     const tree = 'nesting';
     const put = (tree, parentId, handler) => __awaiter(this, void 0, void 0, function* () {
@@ -272,7 +281,6 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             yield ns.put({ tree, docId: c0, parentId: p1, });
             const docs = yield Nodes.find({}).toArray();
             yield assertPs(ns, tree);
-            yield assertPs(ns, tree);
         }));
         it('+p2(2space)+dPs-chPs-lPs-rPs', () => __awaiter(this, void 0, void 0, function* () {
             const p0 = yield put(tree, null);
@@ -280,7 +288,6 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             const p1 = yield put(tree, null);
             yield ns.put({ tree, docId: c0, parentId: p1, });
             const docs = yield Nodes.find({}).toArray();
-            yield assertPs(ns, tree);
             yield assertPs(ns, tree);
         }));
     });
@@ -355,11 +362,11 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             yield assertPs(ns, tree);
         }));
     });
-    describe('pull docId and parentId', () => {
+    describe('pull docId and parentId and tree', () => {
         it('+p+dPs-chPs-lPs-rPs', () => __awaiter(this, void 0, void 0, function* () {
             const rootId = yield put(tree, null);
             const nodeId = yield put(tree, rootId);
-            yield ns.pull({ parentId: rootId, docId: nodeId });
+            yield ns.pull({ parentId: rootId, docId: nodeId, tree: 'nesting' });
             const docs = yield Nodes.find({}).toArray();
             chai_1.assert.lengthOf(docs, 2);
             chai_1.assert.lengthOf(docs[0].positions, 1);
@@ -370,7 +377,7 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             const rootId = yield put(tree, null);
             const nodeId = yield put(tree, rootId);
             const childId = yield put(tree, nodeId);
-            yield ns.pull({ parentId: rootId, docId: nodeId });
+            yield ns.pull({ parentId: rootId, docId: nodeId, tree: 'nesting' });
             const docs = yield Nodes.find({}).toArray();
             chai_1.assert.lengthOf(docs, 3);
             chai_1.assert.lengthOf(docs[0].positions, 1);
@@ -384,7 +391,7 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             const centerId = yield put(tree, rootId);
             const rightId = yield put(tree, rootId);
             const nodeId = yield put(tree, centerId);
-            yield ns.pull({ parentId: centerId, docId: nodeId });
+            yield ns.pull({ parentId: centerId, docId: nodeId, tree: 'nesting' });
             const docs = yield Nodes.find({}).toArray();
             chai_1.assert.lengthOf(docs, 5);
             chai_1.assert.lengthOf(docs[0].positions, 1);
@@ -401,7 +408,7 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             const rightId = yield put(tree, rootId);
             const nodeId = yield put(tree, centerId);
             const childId = yield put(tree, nodeId);
-            yield ns.pull({ parentId: centerId, docId: nodeId });
+            yield ns.pull({ parentId: centerId, docId: nodeId, tree: 'nesting' });
             const docs = yield Nodes.find({}).toArray();
             chai_1.assert.lengthOf(docs, 6);
             chai_1.assert.lengthOf(docs[0].positions, 1);

@@ -1,6 +1,5 @@
 import * as chai from 'chai';
 import * as _ from 'lodash';
-import SimpleSchema from 'simpl-schema';
 import { ObjectID, Collection, MongoClient } from 'mongodb';
 
 // TODO client/server restricted api
@@ -9,6 +8,8 @@ import { ObjectID, Collection, MongoClient } from 'mongodb';
 // Nodes.nesting.pull
 // Nodes.nesting.move
 // Nodes.nesting.deny({ put, pull, move })
+
+// TODO if pull root positionId, currectly pulled children positions?
 
 export interface IDoc {
   _id: string;
@@ -45,13 +46,6 @@ export interface IPullOptions {
   docId?: string;
   parentId?: string;
   tree?: string;
-}
-
-export interface IPullOptions {
-  positionId?: string;
-  parentId?: string;
-  tree?: string;
-  docId?: string;
 }
 
 export interface INameOptions {
@@ -430,7 +424,7 @@ export class NestedSets<Doc extends IDoc> {
         // RESULT D POS
         const space = pP ? pP.space : maybeSpace || new ObjectID().toString();
   
-        const lastDoc = await this.getLastInSpace(tree, space);
+        const lastDoc = await this.getLastInSpace(tree, space); 
         const newCoord = lastDoc ? lastDoc.dp.right + 1 : 0;
   
         const left = pP ? pP.right : newCoord;
@@ -522,12 +516,10 @@ export class NestedSets<Doc extends IDoc> {
           [field]: { $elemMatch: { _id: positionId } },
         });
         chai.assert.exists(d, `Doc is not founded.`);
-        const tdP = this.getPositionByPositionId(d, positionId);
+        const tdP = this.getPositionByPositionId(d, positionId); 
         chai.assert.exists(tdP, `Doc position is not founded.`);
         dPs = [tdP];
       } else if (!positionId && docId && parentId && tree) {
-        chai.assert.isString(docId);
-        chai.assert.isString(parentId);
         chai.assert.isString(tree);
         d = await c.findOne({_id: docId});
         chai.assert.exists(d, `Doc is not founded.`);
@@ -574,7 +566,7 @@ export class NestedSets<Doc extends IDoc> {
       }
     } else if (positionId) {
       for (let p = 0; p < doc[field].length; p++) {
-        if (String(doc[field][p]._id) === (positionId)) {
+        if (String(doc[field][p]._id) === String(positionId)) {
           if (doc[field][p].parentId) {
             for (let pa = 0; pa < doc[field].length; pa++) {
               if (String(doc[field][pa].parentId) === String(doc[field][p].parentId) && doc[field][pa].tree === doc[field][p].tree) {
@@ -589,7 +581,6 @@ export class NestedSets<Doc extends IDoc> {
       }
     } else throw new Error(`Options parentId (${parentId ? '+' : '-'}) and tree (${tree ? '+' : '-'}) or positionId (${positionId ? '+' : '-'}) must be defined.`);
 
-    if (!_.isEmpty($set)) c.updateOne({_id:docId},{ $set },
-    );
+    if (!_.isEmpty($set)) c.updateOne({_id:docId},{ $set },);
   }
 }

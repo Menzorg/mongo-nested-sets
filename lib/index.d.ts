@@ -27,12 +27,6 @@ export interface IPullOptions {
     parentId?: string;
     tree?: string;
 }
-export interface IPullOptions {
-    positionId?: string;
-    parentId?: string;
-    tree?: string;
-    docId?: string;
-}
 export interface INameOptions {
     positionId?: string;
     parentId?: string;
