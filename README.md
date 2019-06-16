@@ -1,6 +1,6 @@
 # mongo-nested-sets
 
-Mongo nested sets realisation.
+Mongo nested sets realisation. Based on code from [ivansglazunov metre repository](https://github.com/ivansglazunov/metre/tree/f0b42805dfaad735446d5caecb56158c76867282/imports/api/nested-sets).
 
 [![NPM](https://img.shields.io/npm/v/mongo-nested-sets.svg)](https://www.npmjs.com/package/mongo-nested-sets)
 [![Build Status](https://travis-ci.org/menzorg/mongo-nested-sets.svg?branch=master)](https://travis-ci.org/menzorg/mongo-nested-sets)
