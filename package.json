@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "tsc": "rm -rf ./lib ./tests && ./node_modules/typescript/bin/tsc",
-    "test": "./node_modules/mocha/bin/mocha ./tests/index.js --require source-map-support/register",
+    "test": "./node_modules/mocha/bin/mocha ./tests/index.js --timeout 20000 --require source-map-support/register",
     "retest": "npm run tsc && npm run test",
     "tslint": "./node_modules/tslint/bin/tslint -c tslint.json './src/**/*.ts'"
   },
