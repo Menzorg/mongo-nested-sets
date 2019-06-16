@@ -11,10 +11,10 @@
     "tslint": "./node_modules/tslint/bin/tslint -c tslint.json './src/**/*.ts'"
   },
   "dependencies": {
+    "chai": "^4.1.2",
+    "chance": "^1.0.18",
     "lodash": "^4.17.10",
-    "simpl-schema": "^1.5.5",
-    "mongodb": "^3.2.6",
-    "chai": "^4.1.2"
+    "mongodb": "^3.2.6"
   },
   "devDependencies": {
     "@types/mocha": "^5.2.0",

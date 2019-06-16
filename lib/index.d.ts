@@ -43,6 +43,7 @@ export declare class NestedSets<Doc extends IDoc> {
         field?: string;
         client: MongoClient<any>;
     }): void;
+    generateId(): any;
     SimpleSchemaRules(): {
         [x: string]: ObjectConstructor | StringConstructor | {
             type: ArrayConstructor;

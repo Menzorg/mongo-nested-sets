@@ -2,22 +2,13 @@ import 'mocha';
 import { assert } from 'chai';
 
 import { NestedSets } from '../lib/index';
-import { ObjectID, MongoClient } from 'mongodb';
+import { MongoClient } from 'mongodb';
 
 let Nodes;
 let mongo;
 let db;
 
 const toIds = (docs) => docs.map(d => d._id);
-
-const draw = (name: string, docs: any[]) => {
-  docs.forEach(({
-    _id,
-    positions,
-  }) => console.log(`${_id.slice(0, 4)} ${positions && positions.map(({
-    space, parentId, left, right, depth
-  }) => `[P:(${parentId && parentId.slice(0, 4)})S:(${space.slice(0, 4)})${left}|${right}{${depth}}(${right - left})]`).join(' ')}`));
-}
 
 const assertPs = async (ns, tree) => {
   const docs = await ns.c.find({}).toArray();
@@ -120,7 +111,7 @@ describe('nested-sets', async () => {
   const ns = new NestedSets();
   const tree = 'nesting';
   const put = async (tree, parentId, handler?) => {
-    const docId = new ObjectID().toString();
+    const docId = ns.generateId();
     await Nodes.insertOne({_id: docId});
     await ns.put({ tree, docId, parentId, });
     if (handler) await handler(docId);
@@ -128,7 +119,7 @@ describe('nested-sets', async () => {
   };
   describe('put', () => {
     it('-p-dPs-chPs-lPs-rPs', async () => {
-      const docId = new ObjectID().toString();
+      const docId = ns.generateId();
       await Nodes.insertOne({_id: docId});
       await ns.put({ tree, docId, parentId: null, });
       const docs = await Nodes.find({}).toArray();
@@ -137,9 +128,9 @@ describe('nested-sets', async () => {
       await assertPs(ns, tree);
     });
     it('-p-dPs-chPs+lPs-rPs', async () => {
-      const space = new ObjectID().toString();
-      const docIdL = new ObjectID().toString();
-      const docId = new ObjectID().toString();
+      const space = ns.generateId();
+      const docIdL = ns.generateId();
+      const docId = ns.generateId();
       await Nodes.insertOne({_id: docIdL});
       await Nodes.insertOne({_id: docId});
       await ns.put({ tree, docId: docIdL, parentId: null, space,
@@ -178,7 +169,7 @@ describe('nested-sets', async () => {
       await assertPs(ns, tree);
     });
     it('-p+dPs-chPs-lPs-rPs', async () => {
-      const docId = new ObjectID().toString();
+      const docId = ns.generateId();
       await Nodes.insertOne({_id: docId});
       await ns.put({ tree, docId, parentId: null, });
       await ns.put({ tree, docId, parentId: null, });
@@ -214,8 +205,8 @@ describe('nested-sets', async () => {
       await assertPs(ns, tree);
     });
     it('+p-dPs-chPs-lPs-rPs', async () => {
-      const parentId = new ObjectID().toString();
-      const docId = new ObjectID().toString();
+      const parentId = ns.generateId();
+      const docId = ns.generateId();
       await Nodes.insertOne({_id: parentId});
       await Nodes.insertOne({_id: docId});
       await ns.put({ tree, docId: parentId, parentId: null, });
@@ -227,8 +218,8 @@ describe('nested-sets', async () => {
       await assertPs(ns, tree);
     });
     it('-p+dPs+chPs-lPs-rPs', async () => {
-      const parentId = new ObjectID().toString();
-      const docId = new ObjectID().toString();
+      const parentId = ns.generateId();
+      const docId = ns.generateId();
       await Nodes.insertOne({_id: parentId});
       await Nodes.insertOne({_id: docId});
       await ns.put({ tree, docId: parentId, parentId: null, });
@@ -241,9 +232,9 @@ describe('nested-sets', async () => {
       await assertPs(ns, tree);
     });
     it('+p+dPs-chPs-lPs-rPs', async () => {
-      const rootId = new ObjectID().toString();
+      const rootId = ns.generateId();
       await Nodes.insertOne({_id: rootId});
-      const parentId = new ObjectID().toString();
+      const parentId = ns.generateId();
       await Nodes.insertOne({_id: parentId});
       await ns.put({ tree, docId: rootId, parentId: null, });
       await ns.put({ tree, docId: parentId, parentId: null, });
@@ -253,11 +244,11 @@ describe('nested-sets', async () => {
       await assertPs(ns, tree);
     });
     it('+p+dPs+chPs-lPs-rPs', async () => {
-      const rootId = new ObjectID().toString();
+      const rootId = ns.generateId();
       await Nodes.insertOne({_id: rootId});
-      const parentId = new ObjectID().toString();
+      const parentId = ns.generateId();
       await Nodes.insertOne({_id: parentId});
-      const docId = new ObjectID().toString();
+      const docId = ns.generateId();
       await Nodes.insertOne({_id: docId});
       await ns.put({ tree, docId: rootId, parentId: null, });
       await ns.put({ tree, docId: parentId, parentId: null, });
@@ -290,7 +281,6 @@ describe('nested-sets', async () => {
       const c1 = await put(tree, c0);
       const p1 = await put(tree, rootId);
       await ns.put({ tree, docId: c0, parentId: p1, });
-      const docs = await Nodes.find({}).toArray();
       await assertPs(ns, tree);
     });
     it('+p2(1space)+dPs-chPs-lPs-rPs', async () => {

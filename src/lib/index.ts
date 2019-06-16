@@ -1,7 +1,9 @@
 import * as chai from 'chai';
 import * as _ from 'lodash';
-import { ObjectID, Collection, MongoClient } from 'mongodb';
+import { Chance } from 'chance';
+import { Collection, MongoClient } from 'mongodb';
 
+var chance = new Chance();
 // TODO client/server restricted api
 // call meteor methods not verified by ts, not reponse result id and not make subs and abstract logic
 // Nodes.nesting.put => _id
@@ -62,8 +64,9 @@ export interface INameOptions {
  * @example
  * const ns = new NestedSets();
  * ns.init({
- *   collection: Meteor.nodes,
- *   field: 'positions', // default
+ *   collection: Meteor["yourCollection"].rawCollection(),
+ *   field: "yourField",
+ *   client: Meteor["yourCollection"]._driver.mongo.client,
  * });
  */
 export class NestedSets<Doc extends IDoc> {
@@ -83,6 +86,10 @@ export class NestedSets<Doc extends IDoc> {
     this.c = collection;
     this.field = field;
     this.client = client;
+  }
+
+  generateId() {
+    return chance.guid();
   }
 
   SimpleSchemaRules() {
@@ -422,7 +429,7 @@ export class NestedSets<Doc extends IDoc> {
 
         // ====================
         // RESULT D POS
-        const space = pP ? pP.space : maybeSpace || new ObjectID().toString();
+        const space = pP ? pP.space : maybeSpace || this.generateId();
   
         const lastDoc = await this.getLastInSpace(tree, space); 
         const newCoord = lastDoc ? lastDoc.dp.right + 1 : 0;
@@ -452,7 +459,7 @@ export class NestedSets<Doc extends IDoc> {
                 const chD = chP.depth - dP.depth;
 
                 await this._push(session, ch._id, {
-                  _id: new ObjectID(),
+                  _id: this.generateId(),
                   parentId: chP.parentId,
                   tree, space,
                   left: chL + left,
@@ -464,7 +471,7 @@ export class NestedSets<Doc extends IDoc> {
             if (!parentId) await this._unlast(session, tree, space);
 
             await this._push(session, d._id, {
-              _id: new ObjectID(),
+              _id: this.generateId(),
               parentId, tree, space, left, right, depth, last,
             });
             // }
@@ -474,7 +481,7 @@ export class NestedSets<Doc extends IDoc> {
             if (parentId) await this._resize(session, tree, space, pP.left, pP.right, +dS+1);
             if (!parentId) await this._unlast(session, tree, space);
             await this._push(session, docId, {
-              _id: new ObjectID(),
+              _id: this.generateId(),
               parentId, tree, space, left, right, depth, last,
             });
           }
@@ -484,7 +491,7 @@ export class NestedSets<Doc extends IDoc> {
           if (parentId) await this._resize(session, tree, space, pP.left, pP.right, +dS+1);
           if (!parentId) await this._unlast(session, tree, space);
           await this._push(session, docId, {
-            _id: new ObjectID(),
+            _id: this.generateId(),
             parentId, tree, space, left, right, depth, last,
           });
         }

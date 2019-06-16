@@ -16,9 +16,6 @@ let Nodes;
 let mongo;
 let db;
 const toIds = (docs) => docs.map(d => d._id);
-const draw = (name, docs) => {
-    docs.forEach(({ _id, positions, }) => console.log(`${_id.slice(0, 4)} ${positions && positions.map(({ space, parentId, left, right, depth }) => `[P:(${parentId && parentId.slice(0, 4)})S:(${space.slice(0, 4)})${left}|${right}{${depth}}(${right - left})]`).join(' ')}`));
-};
 const assertPs = (ns, tree) => __awaiter(this, void 0, void 0, function* () {
     const docs = yield ns.c.find({}).toArray();
     for (let i = 0; i < docs.length; i++) {
@@ -102,7 +99,7 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
     const ns = new index_1.NestedSets();
     const tree = 'nesting';
     const put = (tree, parentId, handler) => __awaiter(this, void 0, void 0, function* () {
-        const docId = new mongodb_1.ObjectID().toString();
+        const docId = ns.generateId();
         yield Nodes.insertOne({ _id: docId });
         yield ns.put({ tree, docId, parentId, });
         if (handler)
@@ -111,7 +108,7 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
     });
     describe('put', () => {
         it('-p-dPs-chPs-lPs-rPs', () => __awaiter(this, void 0, void 0, function* () {
-            const docId = new mongodb_1.ObjectID().toString();
+            const docId = ns.generateId();
             yield Nodes.insertOne({ _id: docId });
             yield ns.put({ tree, docId, parentId: null, });
             const docs = yield Nodes.find({}).toArray();
@@ -120,9 +117,9 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             yield assertPs(ns, tree);
         }));
         it('-p-dPs-chPs+lPs-rPs', () => __awaiter(this, void 0, void 0, function* () {
-            const space = new mongodb_1.ObjectID().toString();
-            const docIdL = new mongodb_1.ObjectID().toString();
-            const docId = new mongodb_1.ObjectID().toString();
+            const space = ns.generateId();
+            const docIdL = ns.generateId();
+            const docId = ns.generateId();
             yield Nodes.insertOne({ _id: docIdL });
             yield Nodes.insertOne({ _id: docId });
             yield ns.put({ tree, docId: docIdL, parentId: null, space,
@@ -155,7 +152,7 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             yield assertPs(ns, tree);
         }));
         it('-p+dPs-chPs-lPs-rPs', () => __awaiter(this, void 0, void 0, function* () {
-            const docId = new mongodb_1.ObjectID().toString();
+            const docId = ns.generateId();
             yield Nodes.insertOne({ _id: docId });
             yield ns.put({ tree, docId, parentId: null, });
             yield ns.put({ tree, docId, parentId: null, });
@@ -185,8 +182,8 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             yield assertPs(ns, tree);
         }));
         it('+p-dPs-chPs-lPs-rPs', () => __awaiter(this, void 0, void 0, function* () {
-            const parentId = new mongodb_1.ObjectID().toString();
-            const docId = new mongodb_1.ObjectID().toString();
+            const parentId = ns.generateId();
+            const docId = ns.generateId();
             yield Nodes.insertOne({ _id: parentId });
             yield Nodes.insertOne({ _id: docId });
             yield ns.put({ tree, docId: parentId, parentId: null, });
@@ -198,8 +195,8 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             yield assertPs(ns, tree);
         }));
         it('-p+dPs+chPs-lPs-rPs', () => __awaiter(this, void 0, void 0, function* () {
-            const parentId = new mongodb_1.ObjectID().toString();
-            const docId = new mongodb_1.ObjectID().toString();
+            const parentId = ns.generateId();
+            const docId = ns.generateId();
             yield Nodes.insertOne({ _id: parentId });
             yield Nodes.insertOne({ _id: docId });
             yield ns.put({ tree, docId: parentId, parentId: null, });
@@ -212,9 +209,9 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             yield assertPs(ns, tree);
         }));
         it('+p+dPs-chPs-lPs-rPs', () => __awaiter(this, void 0, void 0, function* () {
-            const rootId = new mongodb_1.ObjectID().toString();
+            const rootId = ns.generateId();
             yield Nodes.insertOne({ _id: rootId });
-            const parentId = new mongodb_1.ObjectID().toString();
+            const parentId = ns.generateId();
             yield Nodes.insertOne({ _id: parentId });
             yield ns.put({ tree, docId: rootId, parentId: null, });
             yield ns.put({ tree, docId: parentId, parentId: null, });
@@ -224,11 +221,11 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             yield assertPs(ns, tree);
         }));
         it('+p+dPs+chPs-lPs-rPs', () => __awaiter(this, void 0, void 0, function* () {
-            const rootId = new mongodb_1.ObjectID().toString();
+            const rootId = ns.generateId();
             yield Nodes.insertOne({ _id: rootId });
-            const parentId = new mongodb_1.ObjectID().toString();
+            const parentId = ns.generateId();
             yield Nodes.insertOne({ _id: parentId });
-            const docId = new mongodb_1.ObjectID().toString();
+            const docId = ns.generateId();
             yield Nodes.insertOne({ _id: docId });
             yield ns.put({ tree, docId: rootId, parentId: null, });
             yield ns.put({ tree, docId: parentId, parentId: null, });
@@ -261,7 +258,6 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             const c1 = yield put(tree, c0);
             const p1 = yield put(tree, rootId);
             yield ns.put({ tree, docId: c0, parentId: p1, });
-            const docs = yield Nodes.find({}).toArray();
             yield assertPs(ns, tree);
         }));
         it('+p2(1space)+dPs-chPs-lPs-rPs', () => __awaiter(this, void 0, void 0, function* () {
