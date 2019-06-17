@@ -36,6 +36,17 @@ export interface IPosition {
 
 export type TPositions = IPosition[];
 
+export interface IRange {
+  _id: string;
+
+  tree: string;
+  space: string;
+  left: number;
+  right: number;
+}
+
+export type TRange = IRange[];
+
 export interface IPutOptions {
   tree: string;
   docId: string;
@@ -65,26 +76,26 @@ export interface INameOptions {
  * const ns = new NestedSets();
  * ns.init({
  *   collection: Meteor["yourCollection"].rawCollection(),
- *   field: "yourField",
+ *   positionField: "yourPositionField",
  *   client: Meteor["yourCollection"]._driver.mongo.client,
  * });
  */
 export class NestedSets<Doc extends IDoc> {
   public c;
-  public field: string;
+  public positionField: string;
   public client;
 
   init({
     collection,
     client,
-    field = 'positions',
+    positionField = 'positions',
   }: {
     collection: Collection<any>;
-    field?: string,
+    positionField?: string,
     client: MongoClient<any>;
   }) {
     this.c = collection;
-    this.field = field;
+    this.positionField = positionField;
     this.client = client;
   }
 
@@ -94,22 +105,22 @@ export class NestedSets<Doc extends IDoc> {
 
   SimpleSchemaRules() {
     return {
-      [`${this.field}`]: {
+      [`${this.positionField}`]: {
         type: Array,
         optional: true
       },
-      [`${this.field}.$`]: Object,
-      [`${this.field}.$._id`]: String,
-      [`${this.field}.$.parentId`]: {
+      [`${this.positionField}.$`]: Object,
+      [`${this.positionField}.$._id`]: String,
+      [`${this.positionField}.$.parentId`]: {
         type: String,
         optional: true,
       },
-      [`${this.field}.$.tree`]: String,
-      [`${this.field}.$.space`]: String,
-      [`${this.field}.$.left`]: String,
-      [`${this.field}.$.right`]: String,
-      [`${this.field}.$.depth`]: String,
-      [`${this.field}.$.name`]: {
+      [`${this.positionField}.$.tree`]: String,
+      [`${this.positionField}.$.space`]: String,
+      [`${this.positionField}.$.left`]: String,
+      [`${this.positionField}.$.right`]: String,
+      [`${this.positionField}.$.depth`]: String,
+      [`${this.positionField}.$.name`]: {
         type: String,
         optional: true,
       },
@@ -117,10 +128,10 @@ export class NestedSets<Doc extends IDoc> {
   }
 
   getAnyPositionsByTree(doc: Doc, tree: string) {
-    if (doc && doc[this.field]) {
+    if (doc && doc[this.positionField]) {
       const pss = [];
-      for (let d = 0; d < doc[this.field].length; d++) {
-        const ps = doc[this.field][d];
+      for (let d = 0; d < doc[this.positionField].length; d++) {
+        const ps = doc[this.positionField][d];
         if (ps.tree === tree) pss.push(ps);
       }
       return pss;
@@ -130,9 +141,9 @@ export class NestedSets<Doc extends IDoc> {
 
   getPositionsByTreeIn(doc: Doc, tree: string, space: string, left: number, right: number) {
     const pss = [];
-    if (doc && doc[this.field]) {
-      for (let d = 0; d < doc[this.field].length; d++) {
-        const ps = doc[this.field][d];
+    if (doc && doc[this.positionField]) {
+      for (let d = 0; d < doc[this.positionField].length; d++) {
+        const ps = doc[this.positionField][d];
         if (ps.tree === tree && ps.space === space && ps.left >= left && ps.right <= right) pss.push(ps);
       }
     }
@@ -140,9 +151,9 @@ export class NestedSets<Doc extends IDoc> {
   }
 
   getPositionByPositionId(doc: Doc, id: string) {
-    if (doc && doc[this.field]) {
-      for (let d = 0; d < doc[this.field].length; d++) {
-        const ps = doc[this.field][d];
+    if (doc && doc[this.positionField]) {
+      for (let d = 0; d < doc[this.positionField].length; d++) {
+        const ps = doc[this.positionField][d];
         if (String(ps._id) === String(id)) return ps;
       }
     }
@@ -150,9 +161,9 @@ export class NestedSets<Doc extends IDoc> {
 
   getPositionsByParentId(doc: Doc, parentId: string, tree: string) {
     const pss = [];
-    if (doc && doc[this.field]) {
-      for (let d = 0; d < doc[this.field].length; d++) {
-        const ps = doc[this.field][d];
+    if (doc && doc[this.positionField]) {
+      for (let d = 0; d < doc[this.positionField].length; d++) {
+        const ps = doc[this.positionField][d];
         if (String(ps.parentId) === String(parentId) && ps.tree === tree) pss.push(ps);
       }
     }
@@ -167,10 +178,10 @@ export class NestedSets<Doc extends IDoc> {
   }
   
   async _move(session, tree, space, from, size) {
-    const { field, c } = this;
+    const { positionField, c } = this;
     await c.updateMany(
       {
-        [field]: {
+        [positionField]: {
           $elemMatch: {
             tree,
             space,
@@ -180,8 +191,8 @@ export class NestedSets<Doc extends IDoc> {
       },
       {
         $inc: {
-          [`${field}.$[pos].left`]: size,
-          [`${field}.$[pos].right`]: size,
+          [`${positionField}.$[pos].left`]: size,
+          [`${positionField}.$[pos].right`]: size,
         },
       },
       {
@@ -197,10 +208,10 @@ export class NestedSets<Doc extends IDoc> {
   }
   
   async _resize(session, tree, space, left, right, size) {
-    const { field, c } = this;
+    const { positionField, c } = this;
     await c.updateMany(
       {
-        [field]: {
+        [positionField]: {
           $elemMatch: {
             tree,
             space,
@@ -211,7 +222,7 @@ export class NestedSets<Doc extends IDoc> {
       },
       {
         $inc: {
-          [`${field}.$[pos].right`]: size,
+          [`${positionField}.$[pos].right`]: size,
         },
       },
       {
@@ -228,10 +239,10 @@ export class NestedSets<Doc extends IDoc> {
   }
 
   async _unlast(session, tree, space) {
-    const { field, c } = this;
+    const { positionField, c } = this;
     await c.updateMany(
       {
-        [field]: {
+        [positionField]: {
           $elemMatch: {
             tree,
             space,
@@ -241,7 +252,7 @@ export class NestedSets<Doc extends IDoc> {
       },
       {
         $unset: {
-          [`${field}.$[pos].last`]: true,
+          [`${positionField}.$[pos].last`]: true,
         },
       },
       {
@@ -257,10 +268,10 @@ export class NestedSets<Doc extends IDoc> {
   }
 
   async _last(session, tree, space, dPr) {
-    const { field, c } = this;
+    const { positionField, c } = this;
     await c.updateMany(
       {
-        [field]: {
+        [positionField]: {
           $elemMatch: {
             tree,
             space,
@@ -270,7 +281,7 @@ export class NestedSets<Doc extends IDoc> {
       },
       {
         $set: {
-          [`${field}.$[pos].last`]: true,
+          [`${positionField}.$[pos].last`]: true,
         },
       },
       {
@@ -285,10 +296,10 @@ export class NestedSets<Doc extends IDoc> {
   }
 
   async getLastInSpace(tree, space) {
-    const { c, field } = this;
+    const { c, positionField } = this;
 
     const d = await c.findOne({
-      [field]: {
+      [positionField]: {
         $elemMatch: {
           tree, space,
           last: true
@@ -296,7 +307,7 @@ export class NestedSets<Doc extends IDoc> {
       }
     });
     if (d) {
-      const dps = d[field];
+      const dps = d[positionField];
       for (let p = 0; p < dps.length; p++) {
         const dp = dps[p];
         if (dp.tree === tree && dp.space === space && dp.last) return { d, dp };
@@ -306,19 +317,19 @@ export class NestedSets<Doc extends IDoc> {
   }
 
   async regetPos(docId, posId) {
-    const { c, field } = this;
+    const { c, positionField } = this;
 
     const doc = await c.findOne({_id: docId});
-    const dPs = doc[field];
+    const dPs = doc[positionField];
     for (let dPi = 0; dPi < dPs.length; dPi++) {
       if (String(dPs[dPi]._id) === String(posId)) return dPs[dPi];
     }
   }
 
   async getChs(tree, dP) {
-    const { c, field } = this;
+    const { c, positionField } = this;
     return await c.find({
-      [field]: {
+      [positionField]: {
         $elemMatch: {
           tree: tree,
           space: dP.space,
@@ -330,13 +341,13 @@ export class NestedSets<Doc extends IDoc> {
   }
 
   async _push(session, chId, chP) {
-    const { field, c } = this;
+    const { positionField, c } = this;
 
     await c.updateOne(
       { _id: chId },
       {
         $push: {
-          [field]: chP,
+          [positionField]: chP,
         },
       },
       { session },
@@ -344,11 +355,11 @@ export class NestedSets<Doc extends IDoc> {
   }
 
   async _pull(session, tree, space, gteLeft, lteRight, gteDepth) {
-    const { c, field } = this;
+    const { c, positionField } = this;
 
     await c.updateMany(
       {
-        [field]: {
+        [positionField]: {
           $elemMatch: {
             tree, space,
             left: { $gte: gteLeft },
@@ -359,7 +370,7 @@ export class NestedSets<Doc extends IDoc> {
       },
       {
         $pull: {
-          [field]: {
+          [positionField]: {
             tree, space,
             left: { $gte: gteLeft },
             right: { $lte: lteRight },
@@ -390,7 +401,7 @@ export class NestedSets<Doc extends IDoc> {
       // ====================
       // INPUT VARS
       chai.assert.isObject(options);
-      const { c, field } = this;
+      const { c, positionField } = this;
       const {
         tree, docId, parentId,
         space: maybeSpace,
@@ -510,7 +521,7 @@ export class NestedSets<Doc extends IDoc> {
 
     try {
       const {
-        c, field,
+        c, positionField,
       } = this;
 
       chai.assert.isObject(options);
@@ -520,7 +531,7 @@ export class NestedSets<Doc extends IDoc> {
       let d, dPs;
       if (positionId && !docId && !parentId && !tree) {
         d = await c.findOne({
-          [field]: { $elemMatch: { _id: positionId } },
+          [positionField]: { $elemMatch: { _id: positionId } },
         });
         chai.assert.exists(d, `Doc is not founded.`);
         const tdP = this.getPositionByPositionId(d, positionId); 
@@ -556,7 +567,7 @@ export class NestedSets<Doc extends IDoc> {
   }
 
   async name(options: INameOptions) {
-    const { c, field, } = this;
+    const { c, positionField, } = this;
     const { positionId, parentId, tree, docId, name } = options;
 
     const doc = await c.findOne({_id: docId});
@@ -566,22 +577,22 @@ export class NestedSets<Doc extends IDoc> {
     if (parentId && tree) {
       chai.assert.isString(parentId, 'Option parentId must be a string.');
       chai.assert.isString(tree, 'Option tree must be a string.');
-      for (let p = 0; p < doc[field].length; p++) {
-        if (String(doc[field][p].parentId) === String(parentId) && doc[field][p].tree === tree) {
-          $set[`${field}.${p}.name`] = name;
+      for (let p = 0; p < doc[positionField].length; p++) {
+        if (String(doc[positionField][p].parentId) === String(parentId) && doc[positionField][p].tree === tree) {
+          $set[`${positionField}.${p}.name`] = name;
         }
       }
     } else if (positionId) {
-      for (let p = 0; p < doc[field].length; p++) {
-        if (String(doc[field][p]._id) === String(positionId)) {
-          if (doc[field][p].parentId) {
-            for (let pa = 0; pa < doc[field].length; pa++) {
-              if (String(doc[field][pa].parentId) === String(doc[field][p].parentId) && doc[field][pa].tree === doc[field][p].tree) {
-                $set[`${field}.${pa}.name`] = name;
+      for (let p = 0; p < doc[positionField].length; p++) {
+        if (String(doc[positionField][p]._id) === String(positionId)) {
+          if (doc[positionField][p].parentId) {
+            for (let pa = 0; pa < doc[positionField].length; pa++) {
+              if (String(doc[positionField][pa].parentId) === String(doc[positionField][p].parentId) && doc[positionField][pa].tree === doc[positionField][p].tree) {
+                $set[`${positionField}.${pa}.name`] = name;
               }
             }
           } else {
-            $set[`${field}.${p}.name`] = name;
+            $set[`${positionField}.${p}.name`] = name;
           }
           break;
         }

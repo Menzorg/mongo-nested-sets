@@ -25,7 +25,7 @@ const assertP = async (ns, tree, docId, toParent = true) => {
   const docS = ns.getSizeFromPositions(docPs);
 
   const chsByParentId = await Nodes.find({
-    [`${ns.field}.parentId`]: docId,
+    [`${ns.positionField}.parentId`]: docId,
   }).toArray();
 
   let $or = docPs.map(({
@@ -39,7 +39,7 @@ const assertP = async (ns, tree, docId, toParent = true) => {
   }));
 
   let findObj = {
-    [ns.field]: {
+    [ns.positionField]: {
       $elemMatch: {
         tree,
       },
@@ -47,7 +47,7 @@ const assertP = async (ns, tree, docId, toParent = true) => {
   };
   if (!$or.length) $or = [{_id: undefined}];
   
-  findObj[ns.field].$elemMatch["$or"] = $or;
+  findObj[ns.positionField].$elemMatch["$or"] = $or;
 
   const chsByCoords = await Nodes.find(findObj).toArray();
 
@@ -96,7 +96,7 @@ describe('nested-sets', async () => {
       Nodes.deleteMany({});
       ns.init({
         collection: Nodes,
-        field: 'positions',
+        positionField: 'positions',
         client: mongo,
       });
       done();

@@ -28,7 +28,7 @@ const assertP = (ns, tree, docId, toParent = true) => __awaiter(this, void 0, vo
     const docPs = ns.getAnyPositionsByTree(doc, tree);
     const docS = ns.getSizeFromPositions(docPs);
     const chsByParentId = yield Nodes.find({
-        [`${ns.field}.parentId`]: docId,
+        [`${ns.positionField}.parentId`]: docId,
     }).toArray();
     let $or = docPs.map(({ tree, space, left, right, depth }) => ({
         tree,
@@ -38,7 +38,7 @@ const assertP = (ns, tree, docId, toParent = true) => __awaiter(this, void 0, vo
         depth: depth + 1,
     }));
     let findObj = {
-        [ns.field]: {
+        [ns.positionField]: {
             $elemMatch: {
                 tree,
             },
@@ -46,7 +46,7 @@ const assertP = (ns, tree, docId, toParent = true) => __awaiter(this, void 0, vo
     };
     if (!$or.length)
         $or = [{ _id: undefined }];
-    findObj[ns.field].$elemMatch["$or"] = $or;
+    findObj[ns.positionField].$elemMatch["$or"] = $or;
     const chsByCoords = yield Nodes.find(findObj).toArray();
     chai_1.assert.deepEqual(toIds(chsByParentId), toIds(chsByCoords));
     for (let dp = 0; dp < docPs.length; dp++) {
@@ -84,7 +84,7 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             Nodes.deleteMany({});
             ns.init({
                 collection: Nodes,
-                field: 'positions',
+                positionField: 'positions',
                 client: mongo,
             });
             done();

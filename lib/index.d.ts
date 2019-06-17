@@ -15,6 +15,14 @@ export interface IPosition {
     name?: string;
 }
 export declare type TPositions = IPosition[];
+export interface IRange {
+    _id: string;
+    tree: string;
+    space: string;
+    left: number;
+    right: number;
+}
+export declare type TRange = IRange[];
 export interface IPutOptions {
     tree: string;
     docId: string;
@@ -36,11 +44,11 @@ export interface INameOptions {
 }
 export declare class NestedSets<Doc extends IDoc> {
     c: any;
-    field: string;
+    positionField: string;
     client: any;
-    init({ collection, client, field, }: {
+    init({ collection, client, positionField, }: {
         collection: Collection<any>;
-        field?: string;
+        positionField?: string;
         client: MongoClient<any>;
     }): void;
     generateId(): any;
