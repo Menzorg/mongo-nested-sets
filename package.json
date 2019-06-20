@@ -1,6 +1,6 @@
 {
   "name": "mongo-nested-sets",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Mongo tested sets realisation",
   "repository": "menzorg/mongo-nested-sets",
   "license": "MIT",

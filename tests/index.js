@@ -287,11 +287,11 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             yield assertPs(ns, tree);
         }));
     });
-    describe('pull positionId', () => {
+    describe('unnest positionId', () => {
         it('-p-dPs-chPs-lPs-rPs', () => __awaiter(this, void 0, void 0, function* () {
             const nodeId = yield put(tree, null);
             const node = yield Nodes.findOne({ _id: nodeId });
-            yield ns.pull({ positionId: node.positions[0]._id });
+            yield ns.unnest({ positionId: node.positions[0]._id, tree: node.positions[0].tree, space: node.positions[0].space });
             const docs = yield Nodes.find({}).toArray();
             chai_1.assert.lengthOf(docs, 1);
             chai_1.assert.lengthOf(docs[0].positions, 0);
@@ -301,7 +301,7 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             const rootId = yield put(tree, null);
             const nodeId = yield put(tree, rootId);
             const node = yield Nodes.findOne({ _id: nodeId });
-            yield ns.pull({ positionId: node.positions[0]._id });
+            yield ns.unnest({ positionId: node.positions[0]._id, tree: node.positions[0].tree, space: node.positions[0].space });
             const docs = yield Nodes.find({}).toArray();
             chai_1.assert.lengthOf(docs, 2);
             chai_1.assert.lengthOf(docs[0].positions, 1);
@@ -313,7 +313,7 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             const nodeId = yield put(tree, rootId);
             const childId = yield put(tree, nodeId);
             const node = yield Nodes.findOne({ _id: nodeId });
-            yield ns.pull({ positionId: node.positions[0]._id });
+            yield ns.unnest({ positionId: node.positions[0]._id, tree: node.positions[0].tree, space: node.positions[0].space });
             const docs = yield Nodes.find({}).toArray();
             chai_1.assert.lengthOf(docs, 3);
             chai_1.assert.lengthOf(docs[0].positions, 1);
@@ -328,7 +328,7 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             const rightId = yield put(tree, rootId);
             const nodeId = yield put(tree, centerId);
             const node = yield Nodes.findOne({ _id: nodeId });
-            yield ns.pull({ positionId: node.positions[0]._id });
+            yield ns.unnest({ positionId: node.positions[0]._id, tree: node.positions[0].tree, space: node.positions[0].space });
             const docs = yield Nodes.find({}).toArray();
             chai_1.assert.lengthOf(docs, 5);
             chai_1.assert.lengthOf(docs[0].positions, 1);
@@ -346,7 +346,7 @@ describe('nested-sets', () => __awaiter(this, void 0, void 0, function* () {
             const nodeId = yield put(tree, centerId);
             const childId = yield put(tree, nodeId);
             const node = yield Nodes.findOne({ _id: nodeId });
-            yield ns.pull({ positionId: node.positions[0]._id });
+            yield ns.unnest({ positionId: node.positions[0]._id, tree: node.positions[0].tree, space: node.positions[0].space });
             const docs = yield Nodes.find({}).toArray();
             chai_1.assert.lengthOf(docs, 6);
             chai_1.assert.lengthOf(docs[0].positions, 1);

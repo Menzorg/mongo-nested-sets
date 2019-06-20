@@ -30,10 +30,14 @@ export interface IPutOptions {
     space?: string;
 }
 export interface IPullOptions {
-    positionId?: string;
-    docId?: string;
-    parentId?: string;
-    tree?: string;
+    docId: string;
+    parentId: string;
+    tree: string;
+}
+export interface IUnnestOptions {
+    positionId: string;
+    tree: string;
+    space: string;
 }
 export interface INameOptions {
     positionId?: string;
@@ -63,7 +67,7 @@ export declare class NestedSets<Doc extends IDoc> {
     };
     getAnyPositionsByTree(doc: Doc, tree: string): any[];
     getPositionsByTreeIn(doc: Doc, tree: string, space: string, left: number, right: number): any[];
-    getPositionByPositionId(doc: Doc, id: string): any;
+    getPositionByPositionId(doc: Doc, id: string, tree: string, space: string): any;
     getPositionsByParentId(doc: Doc, parentId: string, tree: string): any[];
     getSizeFromPositions(positions: IPosition[]): number;
     _move(session: any, tree: any, space: any, from: any, size: any): Promise<void>;
@@ -81,5 +85,6 @@ export declare class NestedSets<Doc extends IDoc> {
     isIncludes(tree: any, pPs: any, dPs: any): boolean;
     put(options: IPutOptions): Promise<void>;
     pull(options: IPullOptions): Promise<void>;
+    unnest(options: IUnnestOptions): Promise<void>;
     name(options: INameOptions): Promise<void>;
 }

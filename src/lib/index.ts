@@ -55,10 +55,15 @@ export interface IPutOptions {
 }
 
 export interface IPullOptions {
-  positionId?: string;
-  docId?: string;
-  parentId?: string;
-  tree?: string;
+  docId: string;
+  parentId: string;
+  tree: string;
+}
+
+export interface IUnnestOptions {
+  positionId: string;
+  tree: string;
+  space: string;
 }
 
 export interface INameOptions {
@@ -150,11 +155,12 @@ export class NestedSets<Doc extends IDoc> {
     return pss;
   }
 
-  getPositionByPositionId(doc: Doc, id: string) {
+
+  getPositionByPositionId(doc: Doc, id: string, tree: string, space: string) {
     if (doc && doc[this.positionField]) {
       for (let d = 0; d < doc[this.positionField].length; d++) {
         const ps = doc[this.positionField][d];
-        if (String(ps._id) === String(id)) return ps;
+        if (String(ps._id) === String(id) && ps.tree === tree && ps.space === space) return ps;
       }
     }
   }
@@ -526,18 +532,10 @@ export class NestedSets<Doc extends IDoc> {
 
       chai.assert.isObject(options);
 
-      const { positionId, docId, parentId, tree } = options;
+      const { docId, parentId, tree } = options;
 
       let d, dPs;
-      if (positionId && !docId && !parentId && !tree) {
-        d = await c.findOne({
-          [positionField]: { $elemMatch: { _id: positionId } },
-        });
-        chai.assert.exists(d, `Doc is not founded.`);
-        const tdP = this.getPositionByPositionId(d, positionId); 
-        chai.assert.exists(tdP, `Doc position is not founded.`);
-        dPs = [tdP];
-      } else if (!positionId && docId && parentId && tree) {
+      if (docId && parentId && tree) {
         chai.assert.isString(tree);
         d = await c.findOne({_id: docId});
         chai.assert.exists(d, `Doc is not founded.`);
@@ -546,6 +544,47 @@ export class NestedSets<Doc extends IDoc> {
       } else {
         throw new Error(`Must be (positionId) or (docId and parentId and tree), not both.`);
       }
+
+      for (let dPi = 0; dPi < dPs.length; dPi++) {
+        await session.startTransaction();
+        
+        const dP = await this.regetPos(d._id, dPs[dPi]._id);
+        if (dP.last) await this._last(session, dP.tree, dP.space, dP.left - 1);
+        await this._pull(session, dP.tree, dP.space, dP.left, dP.right, dP.depth);
+        if (dP.parentId) await this._resize(session, dP.tree, dP.space, dP.left, dP.right, -((dP.right - dP.left) + 1));
+        await this._move(session, dP.tree, dP.space, dP.left, -((dP.right - dP.left) + 1));
+        
+        await session.commitTransaction();
+      }
+      await session.endSession();
+    } catch(error) {
+      if (session.transaction.state != 'NO_TRANSACTION') await session.abortTransaction();
+      await session.endSession();
+      throw error;
+    }
+  }
+
+  async unnest(options: IUnnestOptions) {
+    const session = this.client.startSession();
+
+    try {
+      const {
+        c, positionField,
+      } = this;
+
+      chai.assert.isObject(options);
+
+      const { positionId, tree, space } = options;
+      chai.assert.exists(positionId, `positionId must be exists`);
+
+      let d, dPs;
+      d = await c.findOne({
+        [positionField]: { $elemMatch: { _id: positionId, tree, space } },
+      });
+      chai.assert.exists(d, `Doc is not founded.`);
+      const tdP = this.getPositionByPositionId(d, positionId, tree, space); 
+      chai.assert.exists(tdP, `Doc position is not founded.`);
+      dPs = [tdP];
 
       for (let dPi = 0; dPi < dPs.length; dPi++) {
         await session.startTransaction();
